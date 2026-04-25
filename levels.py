@@ -1,4 +1,4 @@
-# levels.py
+﻿# levels.py
 # All maps use a 25x25 grid (25 rows, exactly 25 chars per row).
 # Legend:
 #   '.' = empty passable cell
@@ -7,7 +7,7 @@
 #   'E' = end node   (player must reach here)
 
 # ---------------------------------------------------------------------------
-# Maps dictionary — add or edit levels here without touching load_level()
+# Maps dictionary â€” add or edit levels here without touching load_level()
 # ---------------------------------------------------------------------------
 
 MAPS = {
@@ -70,7 +70,7 @@ MAPS = {
     ],
 
     "Hard": [
-        # Organic corridors — all regions connected, no isolated pockets.
+        # Organic corridors â€” all regions connected, no isolated pockets.
         "......W..................",  # row 0  open top row
         "....W.W..................",  # row 1  double-wall column starts
         "....W.W..............E...",  # row 2  E at col 21
@@ -79,10 +79,10 @@ MAPS = {
         "....W.W........WWW.......",  # row 5
         "..S.W.WWWW...WWW.........",  # row 6  S at col 2
         "....W.......W............",  # row 7
-        "............W............",  # row 8
+        ".........................",  # row 8
         "............WWWW.........",  # row 9  walls cols 12-15
         ".......WWWW....W.........",  # row 10 walls cols 7-10, col 15
-        ".......W.......W.........",  # row 11 FIXED: removed col 10 wall & orphan WWW — pocket now open
+        ".......W.......W.........",  # row 11 FIXED: removed col 10 wall & orphan WWW â€” pocket now open
         ".......W.......W.........",  # row 12 FIXED: removed col 10 wall
         "....WW.W.......W.........",  # row 13 FIXED: removed col 10 wall
         "...WW..WWWWWWWWW.........",  # row 14 extended wall rightward to seal properly
@@ -118,8 +118,8 @@ MAPS = {
         ".W..........W...........W",
         "WWWWWWWW.WWWWWWWWWWWWWWWW",
         ".W...................W...",
-        ".W.WWWWWWWWWWWWWWWWWWWW.W",
-        ".W.W.................W.W.",
+        ".W.WWWWWWWWWWWW.WWWWWWW.W",
+        ".W...................W.W.",
         ".W.W.WWWWWWWWWW.WWWWW.W.W",
         ".W.W.W.............E.W.W.",
         ".W.W.WWWWWWWWWWWWWWWW.W..",
@@ -165,7 +165,7 @@ MAPS = {
 
 
 # ---------------------------------------------------------------------------
-# Parser — reads any entry from MAPS and converts to node coords
+# Parser â€” reads any entry from MAPS and converts to node coords
 # ---------------------------------------------------------------------------
 
 def parse_string_map(map_layout, rows):
@@ -194,7 +194,7 @@ def parse_string_map(map_layout, rows):
 
 
 # ---------------------------------------------------------------------------
-# Public API — called by main.py
+# Public API â€” called by main.py
 # ---------------------------------------------------------------------------
 
 def load_level(level_name, rows):
