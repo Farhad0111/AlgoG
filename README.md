@@ -29,6 +29,17 @@ AlgoG is an interactive pathfinding visualization and puzzle game built with Pyt
 - `S` : Start Node (Green)
 - `E` : End Node (Red)
 
+## Color Legend
+
+- `WHITE` : Empty / passable cell
+- `BLACK` : Wall / impassable block
+- `ORANGE` : Start node
+- `TURQUOISE` : End node
+- `PURPLE` : Player-drawn path
+- `BLUE` : Algorithm path result
+- `GREEN` : Open nodes being considered by the algorithm
+- `RED` : Closed nodes already evaluated by the algorithm
+
 ## Installation
 
 1. **Clone the repository**:
