@@ -2,7 +2,7 @@ import pygame
 import sys
 from constants import *
 from grid import make_grid, draw_grid
-from algorithms import a_star, dijkstra
+from algorithms import a_star, dijkstra, bfs, dfs, greedy_best_first, bidirectional_search, jump_point_search
 from ui import Button, draw_text
 from levels import load_level
 
@@ -47,18 +47,26 @@ def main():
     clock = pygame.time.Clock()
     
     # UI Elements
-    btn_easy = Button(GRID_WIDTH + 20, 20, 120, 40, "Easy Map")
-    btn_medium = Button(GRID_WIDTH + 150, 20, 120, 40, "Medium Map")
-    btn_hard = Button(GRID_WIDTH + 20, 70, 120, 40, "Hard Map")
-    btn_maze = Button(GRID_WIDTH + 150, 70, 120, 40, "Maze Map")
-    btn_spiral = Button(GRID_WIDTH + 20, 120, 120, 40, "Spiral Map")
-    btn_blocks = Button(GRID_WIDTH + 150, 120, 120, 40, "Blocks Map")
+    # UI Elements - Map Selection (2 columns with better spacing)
+    btn_easy = Button(GRID_WIDTH + 15, 15, 200, 35, "Easy Map")
+    btn_medium = Button(GRID_WIDTH + 230, 15, 200, 35, "Medium Map")
+    btn_hard = Button(GRID_WIDTH + 15, 55, 200, 35, "Hard Map")
+    btn_maze = Button(GRID_WIDTH + 230, 55, 200, 35, "Maze Map")
+    btn_spiral = Button(GRID_WIDTH + 15, 95, 200, 35, "Spiral Map")
+    btn_blocks = Button(GRID_WIDTH + 230, 95, 200, 35, "Blocks Map")
     
-    btn_astar = Button(GRID_WIDTH + 20, 180, 120, 40, "A* Algo", color=LIGHT_GREEN)
-    btn_dijkstra = Button(GRID_WIDTH + 150, 180, 120, 40, "Dijkstra")
+    # UI Elements - Algorithm Selection (Full width, single column)
+    btn_astar = Button(GRID_WIDTH + 15, 150, 415, 35, "A* Algo", color=LIGHT_GREEN)
+    btn_dijkstra = Button(GRID_WIDTH + 15, 190, 415, 35, "Dijkstra")
+    btn_bfs = Button(GRID_WIDTH + 15, 230, 415, 35, "BFS")
+    btn_dfs = Button(GRID_WIDTH + 15, 270, 415, 35, "DFS")
+    btn_greedy = Button(GRID_WIDTH + 15, 310, 415, 35, "Greedy Best-First")
+    btn_bidir = Button(GRID_WIDTH + 15, 350, 415, 35, "Bidirectional Search")
+    btn_jps = Button(GRID_WIDTH + 15, 390, 415, 35, "Jump Point Search")
     
-    btn_reset = Button(GRID_WIDTH + 20, HEIGHT - 120, 250, 40, "Reset Grid", color=ORANGE)
-    btn_submit = Button(GRID_WIDTH + 20, HEIGHT - 60, 250, 40, "Run Algorithm", color=GREEN)
+    # UI Elements - Action Buttons (Full width, bottom)
+    btn_reset = Button(GRID_WIDTH + 15, HEIGHT - 110, 415, 40, "Reset Grid", color=ORANGE)
+    btn_submit = Button(GRID_WIDTH + 15, HEIGHT - 60, 415, 40, "Run Algorithm", color=GREEN)
 
     selected_algo = "A*"
     
@@ -94,9 +102,19 @@ def main():
         # Highlight selected algorithm
         btn_astar.color = LIGHT_GREEN if selected_algo == "A*" else WHITE
         btn_dijkstra.color = LIGHT_GREEN if selected_algo == "Dijkstra" else WHITE
+        btn_bfs.color = LIGHT_GREEN if selected_algo == "BFS" else WHITE
+        btn_dfs.color = LIGHT_GREEN if selected_algo == "DFS" else WHITE
+        btn_greedy.color = LIGHT_GREEN if selected_algo == "Greedy" else WHITE
+        btn_bidir.color = LIGHT_GREEN if selected_algo == "Bidirectional" else WHITE
+        btn_jps.color = LIGHT_GREEN if selected_algo == "JPS" else WHITE
         
         btn_astar.draw(WIN)
         btn_dijkstra.draw(WIN)
+        btn_bfs.draw(WIN)
+        btn_dfs.draw(WIN)
+        btn_greedy.draw(WIN)
+        btn_bidir.draw(WIN)
+        btn_jps.draw(WIN)
         
         btn_reset.draw(WIN)
         if player_finished:
@@ -104,26 +122,26 @@ def main():
             
         # Draw stats if results are ready
         if state == STATE_RESULTS:
-            draw_text(WIN, "RESULTS", 40, GRID_WIDTH + 150, 250, color=BLACK, center=True)
-            draw_text(WIN, f"Player Steps: {player_steps}", 25, GRID_WIDTH + 20, 300)
-            draw_text(WIN, f"Optimal Steps: {algo_steps}", 25, GRID_WIDTH + 20, 340)
+            draw_text(WIN, "RESULTS", 40, GRID_WIDTH + 225, 470, color=BLACK, center=True)
+            draw_text(WIN, f"Player Steps: {player_steps}", 22, GRID_WIDTH + 20, 525)
+            draw_text(WIN, f"Optimal Steps: {algo_steps}", 22, GRID_WIDTH + 20, 555)
             
             if algo_steps > 0:
                 match_percentage = min(100, int((algo_steps / max(1, player_steps)) * 100))
-                draw_text(WIN, f"Match: {match_percentage}%", 30, GRID_WIDTH + 20, 390, color=BLUE)
+                draw_text(WIN, f"Match: {match_percentage}%", 28, GRID_WIDTH + 225, 600, color=BLUE, center=True)
                 
                 if match_percentage >= 90:
-                    draw_text(WIN, "Excellent! 3 Stars", 30, GRID_WIDTH + 20, 440, color=ORANGE)
+                    draw_text(WIN, "Excellent! 3 Stars", 28, GRID_WIDTH + 225, 640, color=ORANGE, center=True)
                 elif match_percentage >= 70:
-                    draw_text(WIN, "Good! 2 Stars", 30, GRID_WIDTH + 20, 440, color=ORANGE)
+                    draw_text(WIN, "Good! 2 Stars", 28, GRID_WIDTH + 225, 640, color=ORANGE, center=True)
                 else:
-                    draw_text(WIN, "Keep Trying! 1 Star", 30, GRID_WIDTH + 20, 440, color=ORANGE)
+                    draw_text(WIN, "Keep Trying! 1 Star", 28, GRID_WIDTH + 225, 640, color=ORANGE, center=True)
             else:
-                 draw_text(WIN, "No path possible!", 30, GRID_WIDTH + 20, 390, color=RED)
+                 draw_text(WIN, "No path possible!", 28, GRID_WIDTH + 225, 600, color=RED, center=True)
         else:
-             draw_text(WIN, "Draw path from Orange", 22, GRID_WIDTH + 20, 220)
-             draw_text(WIN, "Start to Cyan End", 22, GRID_WIDTH + 20, 250)
-             draw_text(WIN, "Then click Run Algorithm", 22, GRID_WIDTH + 20, 280)
+             draw_text(WIN, "Draw path from Orange", 20, GRID_WIDTH + 225, 500, color=BLACK, center=True)
+             draw_text(WIN, "Start to Cyan End", 20, GRID_WIDTH + 225, 525, color=BLACK, center=True)
+             draw_text(WIN, "Then click Run Algorithm", 20, GRID_WIDTH + 225, 550, color=BLACK, center=True)
 
         pygame.display.update()
 
@@ -174,6 +192,16 @@ def main():
                     selected_algo = "A*"
                 if btn_dijkstra.handle_event(event):
                     selected_algo = "Dijkstra"
+                if btn_bfs.handle_event(event):
+                    selected_algo = "BFS"
+                if btn_dfs.handle_event(event):
+                    selected_algo = "DFS"
+                if btn_greedy.handle_event(event):
+                    selected_algo = "Greedy"
+                if btn_bidir.handle_event(event):
+                    selected_algo = "Bidirectional"
+                if btn_jps.handle_event(event):
+                    selected_algo = "JPS"
                     
                 if btn_reset.handle_event(event):
                     start_node, end_node = apply_level(grid, current_level, ROWS)
@@ -195,8 +223,20 @@ def main():
                     # Run Algo
                     if selected_algo == "A*":
                         algo_path = a_star(lambda: pygame.display.update(), grid, start_node, end_node)
-                    else:
+                    elif selected_algo == "Dijkstra":
                         algo_path = dijkstra(lambda: pygame.display.update(), grid, start_node, end_node)
+                    elif selected_algo == "BFS":
+                        algo_path = bfs(lambda: pygame.display.update(), grid, start_node, end_node)
+                    elif selected_algo == "DFS":
+                        algo_path = dfs(lambda: pygame.display.update(), grid, start_node, end_node)
+                    elif selected_algo == "Greedy":
+                        algo_path = greedy_best_first(lambda: pygame.display.update(), grid, start_node, end_node)
+                    elif selected_algo == "Bidirectional":
+                        algo_path = bidirectional_search(lambda: pygame.display.update(), grid, start_node, end_node)
+                    elif selected_algo == "JPS":
+                        algo_path = jump_point_search(lambda: pygame.display.update(), grid, start_node, end_node)
+                    else:
+                        algo_path = None
                     
                     if algo_path:
                         algo_steps = len(algo_path)
