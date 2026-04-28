@@ -37,6 +37,35 @@ def apply_level(grid, level_name, rows):
         
     return start_node, end_node
 
+
+def draw_color_legend(win):
+    panel_x = GRID_WIDTH + 15
+    panel_y = 470
+    panel_w = 415
+    panel_h = 210
+
+    pygame.draw.rect(win, WHITE, (panel_x, panel_y, panel_w, panel_h))
+    pygame.draw.rect(win, BLACK, (panel_x, panel_y, panel_w, panel_h), 2)
+    draw_text(win, "Color Legend", 26, panel_x + panel_w // 2, panel_y + 20, color=BLACK, center=True)
+
+    legend_items = [
+        ("Start", ORANGE),
+        ("End", TURQUOISE),
+        ("Wall", BLACK),
+        ("Open Nodes", GREEN),
+        ("Closed Nodes", RED),
+        ("Algorithm Path", BLUE),
+        ("Your Path", PURPLE),
+        ("Overlap", YELLOW),
+    ]
+
+    row_y = panel_y + 48
+    for label, color in legend_items:
+        pygame.draw.rect(win, color, (panel_x + 16, row_y, 18, 18))
+        pygame.draw.rect(win, BLACK, (panel_x + 16, row_y, 18, 18), 1)
+        draw_text(win, label, 18, panel_x + 44, row_y - 1, color=BLACK)
+        row_y += 20
+
 def main():
     grid = make_grid(ROWS, GRID_WIDTH)
     
@@ -63,6 +92,7 @@ def main():
     btn_greedy = Button(GRID_WIDTH + 15, 310, 415, 35, "Greedy Best-First")
     btn_bidir = Button(GRID_WIDTH + 15, 350, 415, 35, "Bidirectional Search")
     btn_jps = Button(GRID_WIDTH + 15, 390, 415, 35, "Jump Point Search")
+    btn_color_info = Button(GRID_WIDTH + 335, 430, 95, 32, "i Colors", font_size=20)
     
     # UI Elements - Action Buttons (Full width, bottom)
     btn_reset = Button(GRID_WIDTH + 15, HEIGHT - 110, 415, 40, "Reset Grid", color=ORANGE)
@@ -79,6 +109,7 @@ def main():
     match_percentage = 0
     player_steps = 0
     algo_steps = 0
+    show_color_info = False
     
     state = STATE_DRAWING
 
@@ -115,33 +146,37 @@ def main():
         btn_greedy.draw(WIN)
         btn_bidir.draw(WIN)
         btn_jps.draw(WIN)
+        btn_color_info.draw(WIN)
         
         btn_reset.draw(WIN)
         if player_finished:
             btn_submit.draw(WIN)
-            
-        # Draw stats if results are ready
-        if state == STATE_RESULTS:
-            draw_text(WIN, "RESULTS", 40, GRID_WIDTH + 225, 470, color=BLACK, center=True)
-            draw_text(WIN, f"Player Steps: {player_steps}", 22, GRID_WIDTH + 20, 525)
-            draw_text(WIN, f"Optimal Steps: {algo_steps}", 22, GRID_WIDTH + 20, 555)
-            
-            if algo_steps > 0:
-                match_percentage = min(100, int((algo_steps / max(1, player_steps)) * 100))
-                draw_text(WIN, f"Match: {match_percentage}%", 28, GRID_WIDTH + 225, 600, color=BLUE, center=True)
-                
-                if match_percentage >= 90:
-                    draw_text(WIN, "Excellent! 3 Stars", 28, GRID_WIDTH + 225, 640, color=ORANGE, center=True)
-                elif match_percentage >= 70:
-                    draw_text(WIN, "Good! 2 Stars", 28, GRID_WIDTH + 225, 640, color=ORANGE, center=True)
-                else:
-                    draw_text(WIN, "Keep Trying! 1 Star", 28, GRID_WIDTH + 225, 640, color=ORANGE, center=True)
-            else:
-                 draw_text(WIN, "No path possible!", 28, GRID_WIDTH + 225, 600, color=RED, center=True)
+
+        if show_color_info:
+            draw_color_legend(WIN)
         else:
-             draw_text(WIN, "Draw path from Orange", 20, GRID_WIDTH + 225, 500, color=BLACK, center=True)
-             draw_text(WIN, "Start to Cyan End", 20, GRID_WIDTH + 225, 525, color=BLACK, center=True)
-             draw_text(WIN, "Then click Run Algorithm", 20, GRID_WIDTH + 225, 550, color=BLACK, center=True)
+            # Draw stats if results are ready
+            if state == STATE_RESULTS:
+                draw_text(WIN, "RESULTS", 40, GRID_WIDTH + 225, 470, color=BLACK, center=True)
+                draw_text(WIN, f"Player Steps: {player_steps}", 22, GRID_WIDTH + 20, 525)
+                draw_text(WIN, f"Optimal Steps: {algo_steps}", 22, GRID_WIDTH + 20, 555)
+
+                if algo_steps > 0:
+                    match_percentage = min(100, int((algo_steps / max(1, player_steps)) * 100))
+                    draw_text(WIN, f"Match: {match_percentage}%", 28, GRID_WIDTH + 225, 600, color=BLUE, center=True)
+
+                    if match_percentage >= 90:
+                        draw_text(WIN, "Excellent! 3 Stars", 28, GRID_WIDTH + 225, 640, color=ORANGE, center=True)
+                    elif match_percentage >= 70:
+                        draw_text(WIN, "Good! 2 Stars", 28, GRID_WIDTH + 225, 640, color=ORANGE, center=True)
+                    else:
+                        draw_text(WIN, "Keep Trying! 1 Star", 28, GRID_WIDTH + 225, 640, color=ORANGE, center=True)
+                else:
+                    draw_text(WIN, "No path possible!", 28, GRID_WIDTH + 225, 600, color=RED, center=True)
+            else:
+                draw_text(WIN, "Draw path from Orange", 20, GRID_WIDTH + 225, 500, color=BLACK, center=True)
+                draw_text(WIN, "Start to Cyan End", 20, GRID_WIDTH + 225, 525, color=BLACK, center=True)
+                draw_text(WIN, "Then click Run Algorithm", 20, GRID_WIDTH + 225, 550, color=BLACK, center=True)
 
         pygame.display.update()
 
@@ -202,6 +237,8 @@ def main():
                     selected_algo = "Bidirectional"
                 if btn_jps.handle_event(event):
                     selected_algo = "JPS"
+                if btn_color_info.handle_event(event):
+                    show_color_info = not show_color_info
                     
                 if btn_reset.handle_event(event):
                     start_node, end_node = apply_level(grid, current_level, ROWS)
