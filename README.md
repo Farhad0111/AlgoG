@@ -22,6 +22,23 @@ AlgoG is an interactive pathfinding visualization and puzzle game built with Pyt
 - `constants.py`: Centralized file for colors, dimensions, and game states.
 - `requirements.txt`: Lists the dependencies required to run the project.
 
+## Pathfinding Algorithms Overview
+
+1.  **Breadth-First Search (BFS)**
+    - **How it behaves**: BFS explores uniformly in all directions, layer by layer, like a ripple in a pond. Starting at the Orange square, it will flood the empty space. It will hit the immediate vertical walls, wrap around their top and bottom openings, and slowly fill the entire left side of the map—including wasting time exploring every nook of that zig-zag wall on the bottom left.
+2.  **Depth-First Search (DFS)**
+    - **How it behaves**: DFS prioritizes depth over area, plunging blindly in one directional priority (e.g., always trying Up, then Right, then Down, then Left) until it hits a wall, then backtracking.
+3.  **Dijkstra’s Algorithm**
+    - **How it behaves**: Because this grid map is unweighted (moving from one tile to any adjacent tile has an identical cost of 1), Dijkstra behaves exactly like BFS.
+4.  **Greedy Best-First Search**
+    - **How it behaves**: This algorithm relies entirely on a heuristic—typically the straight-line (Euclidean or Manhattan) distance to the goal—ignoring how much distance it has already traveled. From the Orange square, it wants to rush directly up and right toward the Cyan square.
+5.  **A* Search (A-Star)**
+    - **How it behaves**: A* balances both worlds using the evaluation function $f(n) = g(n) + h(n)$, where $g(n)$ is the actual path cost from the start and $h(n)$ is the estimated distance to the goal.
+6.  **Bidirectional Search**
+    - **How it behaves**: This approach runs two simultaneous searches: one forward from the Orange square and one backward from the Cyan square, stopping when the two frontiers meet in the middle.
+7.  **Jump Point Search (JPS)**
+    - **How it behaves**: JPS is a highly specialized optimization of A* designed specifically for uniform-cost grids like this one. Instead of evaluating every single open neighbor cell by cell, it looks ahead along straight horizontal, vertical, and diagonal lines to find "jump points"—essentially corners or edges of obstacles that force a change in direction.
+
 ## Map Legend
 
 - `.` : Empty passable cell
