@@ -39,6 +39,50 @@ AlgoG is an interactive pathfinding visualization and puzzle game built with Pyt
 7.  **Jump Point Search (JPS)**
     - **How it behaves**: JPS is a highly specialized optimization of A* designed specifically for uniform-cost grids like this one. Instead of evaluating every single open neighbor cell by cell, it looks ahead along straight horizontal, vertical, and diagonal lines to find "jump points"—essentially corners or edges of obstacles that force a change in direction.
 
+### Real-World Speed Ranking (Typical)
+
+For large grid maps:
+
+Fastest → Slowest
+1. **JPS**
+2. **Bidirectional A***
+3. **A***
+4. **Greedy Best-First**
+5. **BFS**
+6. **Dijkstra**
+7. **DFS** (unreliable)
+
+### Memory Usage Ranking
+
+Lowest → Highest
+1. **DFS**
+2. **Greedy**
+3. **A***
+4. **JPS**
+5. **BFS**
+6. **Dijkstra**
+
+### Comparison Table
+
+| Algorithm                  | Time Complexity              | Space Complexity      | Optimal?                | Complete?  | Main Idea                   |
+| -------------------------- | ---------------------------- | --------------------- | ----------------------- | ---------- | --------------------------- |
+| Breadth-First Search (BFS) | $O(V + E)$                   | $O(V)$                | Yes (unweighted)        | Yes        | Expands layer by layer      |
+| Depth-First Search (DFS)   | $O(V + E)$                   | $O(V)$                | No                      | Sometimes  | Goes deep first             |
+| Dijkstra                   | $O((V+E)\log V)$             | $O(V)$                | Yes                     | Yes        | Expands lowest cost         |
+| Greedy Best-First          | Worst: $O(V)$ to $O(E)$      | $O(V)$                | No                      | Not always | Chases goal using heuristic |
+| A*                         | Worst: like Dijkstra         | $O(V)$                | Yes (good heuristic)    | Yes        | Combines cost + heuristic   |
+| Bidirectional Search       | Roughly $O(b^{d/2})$         | $O(b^{d/2})$          | Yes (with BFS/Dijkstra) | Yes        | Searches from both ends     |
+| Jump Point Search (JPS)    | Much faster than A* on grids | Lower than A* usually | Yes                     | Yes        | Skips unnecessary nodes     |
+
+### Symbol Meanings
+
+| Symbol | Meaning                                    |
+| ------ | ------------------------------------------ |
+| $V$    | Number of vertices (cells/nodes)           |
+| $E$    | Number of edges (connections)              |
+| $b$    | Branching factor (possible moves per step) |
+| $d$    | Depth / distance to goal                   |
+
 ## Map Legend
 
 - `.` : Empty passable cell
