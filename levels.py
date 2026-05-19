@@ -1,4 +1,4 @@
-﻿# levels.py
+# levels.py
 # All maps use a 25x25 grid (25 rows, exactly 25 chars per row).
 # Legend:
 #   '.' = empty passable cell
@@ -159,6 +159,35 @@ MAPS = {
         "W.W.W.WWWWWWWWWW.W.W.W.W.",
         "W.W..............W...W.E.",
         "W.WWWWWWWWWWWWWWWWWWWWWWW",
+    ],
+
+    "Blocks": [
+        # Fix #13: grid of evenly spaced wall-blocks; multiple routes, no dead ends.
+        ".........................",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".........................",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".........................",
+        "..S.......................",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".........................",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".........................",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".........................",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".WWW..WWW..WWW..WWW..WWW.",
+        ".....................E...",
+        ".........................",
     ],
 
 }

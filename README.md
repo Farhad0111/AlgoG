@@ -9,8 +9,48 @@ AlgoG is an interactive pathfinding visualization and puzzle game built with Pyt
 - **Pathfinding Algorithms**: Compare your results with industry-standard algorithms:
   - **A* Search**: Uses heuristics to find the shortest path efficiently.
   - **Dijkstra's Algorithm**: Guarantees the shortest path by exploring all possible directions.
+  - **BFS (Breadth-First Search)**: Explores uniformly in all directions.
+  - **DFS (Depth-First Search)**: Prioritizes depth over area.
+  - **Greedy Best-First Search**: Chases the goal using only a heuristic.
+  - **Bidirectional Search**: Searches from both start and end simultaneously.
+  - **Jump Point Search (JPS)**: Optimized for uniform-cost grids to skip unnecessary nodes.
 - **Performance Metrics**: Compare your path steps against the algorithm's optimal steps.
 - **Customizable Environment**: Easy to add or edit maps in `levels.py`.
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.x
+- Pygame
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/AlgoG.git
+   cd AlgoG
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### Running the App
+
+```bash
+python main.py
+```
+
+## How to Play
+
+1. **Select a Map**: Choose a level from the sidebar.
+2. **Select an Algorithm**: Choose which algorithm you want to compete against.
+3. **Draw Your Path**: Click and drag your mouse from the **Start** (Orange) to the **End** (Cyan) to draw your path.
+4. **Run Algorithm**: Click "Run Algorithm" to see how the selected AI finds the path.
+5. **Compare**: View the step count comparison in the sidebar results.
+6. **Reset**: Click "Reset Application" to clear the board or "Clear Paths" to try again on the same map.
 
 ## Project Structure
 
@@ -63,7 +103,7 @@ Lowest → Highest
 6. **Dijkstra**
 
 ### Comparison Table
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------
 | Algorithm                  | Time Complexity              | Space Complexity      | Optimal?                | Complete?  | Main Idea                   |
 | -------------------------- | ---------------------------- | --------------------- | ----------------------- | ---------- | --------------------------- |
 | Breadth-First Search (BFS) | $O(V + E)$                   | $O(V)$                | Yes (unweighted)        | Yes        | Expands layer by layer      |
@@ -73,15 +113,17 @@ Lowest → Highest
 | A*                         | Worst: like Dijkstra         | $O(V)$                | Yes (good heuristic)    | Yes        | Combines cost + heuristic   |
 | Bidirectional Search       | Roughly $O(b^{d/2})$         | $O(b^{d/2})$          | Yes (with BFS/Dijkstra) | Yes        | Searches from both ends     |
 | Jump Point Search (JPS)    | Much faster than A* on grids | Lower than A* usually | Yes                     | Yes        | Skips unnecessary nodes     |
+----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### Symbol Meanings
-
+-------------------------------------------------------
 | Symbol | Meaning                                    |
 | ------ | ------------------------------------------ |
 | $V$    | Number of vertices (cells/nodes)           |
 | $E$    | Number of edges (connections)              |
 | $b$    | Branching factor (possible moves per step) |
 | $d$    | Depth / distance to goal                   |
+-------------------------------------------------------
 
 ## Map Legend
 

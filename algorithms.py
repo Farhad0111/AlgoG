@@ -3,19 +3,41 @@ import pygame
 from collections import deque
 from queue import PriorityQueue
 
-def h(p1, p2):
-    x1, y1 = p1
-    x2, y2 = p2
-    return abs(x1 - x2) + abs(y1 - y2)
 
-def reconstruct_path(came_from, current, draw):
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+def h(p1, p2):
+    """Manhattan distance heuristic."""
+    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+
+
+def reconstruct_path(came_from, end, draw):
+    """
+    Fix #3: Walk came_from from end back to start, INCLUDE the start node,
+    return the path ordered start→end, and color only intermediate nodes
+    (start/end are re-colored by the caller).
+
+    Returns a list of nodes [start, ..., end].
+    """
     path = []
+    current = end
     while current in came_from:
         path.append(current)
         current = came_from[current]
-        current.make_path()
+        # Color the node we just moved to (predecessor) only if it isn't start
+        if current in came_from:
+            current.make_path()
         draw()
+    path.append(current)   # append start
+    path.reverse()         # now ordered start → end
     return path
+
+
+# ---------------------------------------------------------------------------
+# A*
+# ---------------------------------------------------------------------------
 
 def a_star(draw, grid, start, end):
     count = 0
@@ -26,7 +48,6 @@ def a_star(draw, grid, start, end):
     g_score[start] = 0
     f_score = {node: float("inf") for row in grid for node in row}
     f_score[start] = h(start.get_pos(), end.get_pos())
-
     open_set_hash = {start}
 
     while not open_set.empty():
@@ -35,7 +56,7 @@ def a_star(draw, grid, start, end):
                 pygame.quit()
 
         current = open_set.get()[2]
-        open_set_hash.remove(current)
+        open_set_hash.discard(current)   # discard is safe even if already removed
 
         if current == end:
             path = reconstruct_path(came_from, end, draw)
@@ -44,34 +65,35 @@ def a_star(draw, grid, start, end):
             return path
 
         for neighbor in current.neighbors:
-            temp_g_score = g_score[current] + 1
-
-            if temp_g_score < g_score[neighbor]:
+            temp_g = g_score[current] + 1
+            if temp_g < g_score[neighbor]:
                 came_from[neighbor] = current
-                g_score[neighbor] = temp_g_score
-                f_score[neighbor] = temp_g_score + h(neighbor.get_pos(), end.get_pos())
-                if neighbor not in open_set_hash:
-                    count += 1
-                    open_set.put((f_score[neighbor], count, neighbor))
-                    open_set_hash.add(neighbor)
-                    neighbor.make_open()
+                g_score[neighbor] = temp_g
+                f_score[neighbor] = temp_g + h(neighbor.get_pos(), end.get_pos())
+                # Fix #12 pattern: always re-insert so the queue has the latest score
+                count += 1
+                open_set.put((f_score[neighbor], count, neighbor))
+                open_set_hash.add(neighbor)
+                neighbor.make_open()
 
         draw()
-
         if current != start:
             current.make_closed()
 
     return None
+
+
+# ---------------------------------------------------------------------------
+# Dijkstra  — Fix #12: use lazy-deletion so improved scores are always queued
+# ---------------------------------------------------------------------------
 
 def dijkstra(draw, grid, start, end):
     count = 0
     open_set = PriorityQueue()
     open_set.put((0, count, start))
     came_from = {}
-    
     g_score = {node: float("inf") for row in grid for node in row}
     g_score[start] = 0
-
     open_set_hash = {start}
 
     while not open_set.empty():
@@ -79,8 +101,12 @@ def dijkstra(draw, grid, start, end):
             if event.type == pygame.QUIT:
                 pygame.quit()
 
-        current = open_set.get()[2]
-        open_set_hash.remove(current)
+        current_g, _, current = open_set.get()
+
+        # Lazy deletion: skip stale entries (node was re-queued with better score)
+        if current not in open_set_hash:
+            continue
+        open_set_hash.discard(current)
 
         if current == end:
             path = reconstruct_path(came_from, end, draw)
@@ -89,25 +115,25 @@ def dijkstra(draw, grid, start, end):
             return path
 
         for neighbor in current.neighbors:
-            temp_g_score = g_score[current] + 1
-
-            if temp_g_score < g_score[neighbor]:
+            temp_g = g_score[current] + 1
+            if temp_g < g_score[neighbor]:
                 came_from[neighbor] = current
-                g_score[neighbor] = temp_g_score
-                
-                if neighbor not in open_set_hash:
-                    count += 1
-                    open_set.put((g_score[neighbor], count, neighbor))
-                    open_set_hash.add(neighbor)
-                    neighbor.make_open()
+                g_score[neighbor] = temp_g
+                count += 1
+                open_set.put((temp_g, count, neighbor))   # re-insert with new score
+                open_set_hash.add(neighbor)
+                neighbor.make_open()
 
         draw()
-
         if current != start:
             current.make_closed()
 
     return None
 
+
+# ---------------------------------------------------------------------------
+# BFS
+# ---------------------------------------------------------------------------
 
 def bfs(draw, grid, start, end):
     queue = deque([start])
@@ -120,7 +146,6 @@ def bfs(draw, grid, start, end):
                 pygame.quit()
 
         current = queue.popleft()
-
         if current == end:
             path = reconstruct_path(came_from, end, draw)
             end.make_end()
@@ -135,12 +160,15 @@ def bfs(draw, grid, start, end):
                 neighbor.make_open()
 
         draw()
-
         if current != start:
             current.make_closed()
 
     return None
 
+
+# ---------------------------------------------------------------------------
+# DFS
+# ---------------------------------------------------------------------------
 
 def dfs(draw, grid, start, end):
     stack = [start]
@@ -153,7 +181,6 @@ def dfs(draw, grid, start, end):
                 pygame.quit()
 
         current = stack.pop()
-
         if current == end:
             path = reconstruct_path(came_from, end, draw)
             end.make_end()
@@ -168,12 +195,15 @@ def dfs(draw, grid, start, end):
                 neighbor.make_open()
 
         draw()
-
         if current != start:
             current.make_closed()
 
     return None
 
+
+# ---------------------------------------------------------------------------
+# Greedy Best-First
+# ---------------------------------------------------------------------------
 
 def greedy_best_first(draw, grid, start, end):
     count = 0
@@ -189,7 +219,7 @@ def greedy_best_first(draw, grid, start, end):
                 pygame.quit()
 
         current = open_set.get()[2]
-        open_set_hash.remove(current)
+        open_set_hash.discard(current)
 
         if current == end:
             path = reconstruct_path(came_from, end, draw)
@@ -201,34 +231,46 @@ def greedy_best_first(draw, grid, start, end):
             if neighbor not in visited:
                 visited.add(neighbor)
                 came_from[neighbor] = current
-                if neighbor not in open_set_hash:
-                    count += 1
-                    open_set.put((h(neighbor.get_pos(), end.get_pos()), count, neighbor))
-                    open_set_hash.add(neighbor)
-                    neighbor.make_open()
+                count += 1
+                open_set.put((h(neighbor.get_pos(), end.get_pos()), count, neighbor))
+                open_set_hash.add(neighbor)
+                neighbor.make_open()
 
         draw()
-
         if current != start:
             current.make_closed()
 
     return None
 
 
-def reconstruct_bidirectional_path(came_from_start, came_from_end, meet_node, start, end, draw):
-    path = []
+# ---------------------------------------------------------------------------
+# Bidirectional BFS  — Fix #7: clean path reconstruction, no duplicate meet_node
+# ---------------------------------------------------------------------------
+
+def _reconstruct_bidir_path(came_from_start, came_from_end, meet_node, start, end, draw):
+    """
+    Build a contiguous path [start, ..., meet_node, ..., end].
+    meet_node appears exactly once (at the junction).
+    """
+    # Walk backward from meet_node to start
+    forward = []
     node = meet_node
-
     while node in came_from_start:
-        path.append(node)
+        forward.append(node)
         node = came_from_start[node]
-    path.append(start)
-    path.reverse()
+    forward.append(start)
+    forward.reverse()                   # [start, ..., meet_node]
 
+    # Walk forward from meet_node toward end (via came_from_end)
+    # came_from_end maps discovered_node → the end-side BFS parent
+    # so following it from meet_node walks toward end
+    backward = []
     node = meet_node
     while node in came_from_end:
         node = came_from_end[node]
-        path.append(node)
+        backward.append(node)           # excludes meet_node, includes end
+
+    path = forward + backward           # meet_node appears exactly once
 
     for node in path:
         if node != start and node != end:
@@ -241,12 +283,12 @@ def reconstruct_bidirectional_path(came_from_start, came_from_end, meet_node, st
 
 
 def bidirectional_search(draw, grid, start, end):
-    queue_start = deque([start])
-    queue_end = deque([end])
+    queue_start   = deque([start])
+    queue_end     = deque([end])
     visited_start = {start}
-    visited_end = {end}
+    visited_end   = {end}
     came_from_start = {}
-    came_from_end = {}
+    came_from_end   = {}
     meet_node = None
 
     while queue_start and queue_end:
@@ -254,8 +296,8 @@ def bidirectional_search(draw, grid, start, end):
             if event.type == pygame.QUIT:
                 pygame.quit()
 
+        # Expand one step from start side
         current = queue_start.popleft()
-
         for neighbor in current.neighbors:
             if neighbor not in visited_start:
                 visited_start.add(neighbor)
@@ -275,8 +317,8 @@ def bidirectional_search(draw, grid, start, end):
         if not queue_end:
             break
 
+        # Expand one step from end side
         current = queue_end.popleft()
-
         for neighbor in current.neighbors:
             if neighbor not in visited_end:
                 visited_end.add(neighbor)
@@ -296,70 +338,91 @@ def bidirectional_search(draw, grid, start, end):
     if not meet_node:
         return None
 
-    return reconstruct_bidirectional_path(came_from_start, came_from_end, meet_node, start, end, draw)
+    return _reconstruct_bidir_path(came_from_start, came_from_end, meet_node, start, end, draw)
 
+
+# ---------------------------------------------------------------------------
+# Jump Point Search (4-directional)
+# Fix #6: Proper cardinal-only JPS with correct forced-neighbor detection.
+# In a 4-connected grid a forced neighbour for horizontal travel exists when
+# a perpendicular cell is blocked at the PREVIOUS column but open at the
+# current column (you couldn't have reached it cheaply without turning here).
+# ---------------------------------------------------------------------------
 
 def jump_point_search(draw, grid, start, end):
-    rows = len(grid)
-    cols = len(grid[0])
+    rows      = len(grid)
+    cols      = len(grid[0])
     start_pos = start.get_pos()
-    end_pos = end.get_pos()
+    end_pos   = end.get_pos()
 
-    def in_bounds(pos):
-        r, c = pos
+    def in_bounds(r, c):
         return 0 <= r < rows and 0 <= c < cols
 
-    def passable(pos):
-        return in_bounds(pos) and not grid[pos[0]][pos[1]].is_wall()
+    def passable(r, c):
+        return in_bounds(r, c) and not grid[r][c].is_wall()
 
-    def get_node(pos):
-        return grid[pos[0]][pos[1]]
-
-    def jump(pos, direction):
-        next_pos = (pos[0] + direction[0], pos[1] + direction[1])
-        if not passable(next_pos):
+    def jump(r, c, dr, dc):
+        """
+        Scan from (r+dr, c+dc) in direction (dr,dc).
+        Returns the position of a jump point, or None.
+        """
+        nr, nc = r + dr, c + dc
+        if not passable(nr, nc):
             return None
-        if next_pos == end_pos:
-            return next_pos
+        if (nr, nc) == end_pos:
+            return (nr, nc)
 
-        if direction[0] == 0:
-            if passable((next_pos[0] - 1, next_pos[1])) or passable((next_pos[0] + 1, next_pos[1])):
-                return next_pos
-        else:
-            if passable((next_pos[0], next_pos[1] - 1)) or passable((next_pos[0], next_pos[1] + 1)):
-                return next_pos
+        if dr == 0:  # horizontal movement
+            # Forced neighbour: perpendicular cell blocked at previous col, open now
+            if (not passable(nr - 1, nc - dc) and passable(nr - 1, nc)) or \
+               (not passable(nr + 1, nc - dc) and passable(nr + 1, nc)):
+                return (nr, nc)
+        else:        # vertical movement
+            # Forced neighbour: perpendicular cell blocked at previous row, open now
+            if (not passable(nr - dr, nc - 1) and passable(nr, nc - 1)) or \
+               (not passable(nr - dr, nc + 1) and passable(nr, nc + 1)):
+                return (nr, nc)
+            # For vertical movement, also test horizontal jumps (recursive)
+            if jump(nr, nc, 0, 1) is not None or jump(nr, nc, 0, -1) is not None:
+                return (nr, nc)
 
-        return jump(next_pos, direction)
+        return jump(nr, nc, dr, dc)   # continue in same direction
 
     def get_successors(node, parent_pos):
-        pos = node.get_pos()
+        r, c = node.get_pos()
         successors = []
-        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
         if parent_pos is None:
-            for direction in directions:
-                next_pos = jump(pos, direction)
-                if next_pos:
-                    successors.append(next_pos)
+            # Start node: explore all 4 directions
+            for dr, dc in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                jp = jump(r, c, dr, dc)
+                if jp:
+                    successors.append(jp)
         else:
-            direction = (pos[0] - parent_pos[0], pos[1] - parent_pos[1])
-            next_pos = jump(pos, direction)
-            if next_pos:
-                successors.append(next_pos)
+            pr, pc = parent_pos
+            dr = 0 if r == pr else (1 if r > pr else -1)
+            dc = 0 if c == pc else (1 if c > pc else -1)
 
-            if direction[0] == 0:
-                perpendicular = [(1, 0), (-1, 0)]
-            else:
-                perpendicular = [(0, 1), (0, -1)]
+            # Continue in natural direction
+            jp = jump(r, c, dr, dc)
+            if jp:
+                successors.append(jp)
 
-            for perp in perpendicular:
-                if passable((pos[0] + perp[0], pos[1] + perp[1])):
-                    next_pos = jump(pos, perp)
-                    if next_pos:
-                        successors.append(next_pos)
+            # Always probe perpendicular directions
+            if dr != 0:              # moving vertically → probe horizontal
+                for pdc in (1, -1):
+                    jp = jump(r, c, 0, pdc)
+                    if jp:
+                        successors.append(jp)
+            else:                    # moving horizontally → probe vertical
+                for pdr in (1, -1):
+                    jp = jump(r, c, pdr, 0)
+                    if jp:
+                        successors.append(jp)
 
         return successors
 
+    # A* outer loop driving JPS successor generation
     count = 0
     open_set = PriorityQueue()
     open_set.put((h(start_pos, end_pos), count, start, None))
@@ -374,7 +437,11 @@ def jump_point_search(draw, grid, start, end):
                 pygame.quit()
 
         _, _, current, parent_pos = open_set.get()
-        open_set_hash.remove(current)
+
+        # Lazy deletion
+        if current not in open_set_hash:
+            continue
+        open_set_hash.discard(current)
 
         if current == end:
             path = reconstruct_path(came_from, end, draw)
@@ -383,26 +450,22 @@ def jump_point_search(draw, grid, start, end):
             return path
 
         current_pos = current.get_pos()
-        successors = get_successors(current, parent_pos)
-
-        for successor_pos in successors:
-            successor_node = get_node(successor_pos)
-            distance = abs(successor_pos[0] - current_pos[0]) + abs(successor_pos[1] - current_pos[1])
+        for successor_pos in get_successors(current, parent_pos):
+            sr, sc = successor_pos
+            successor_node = grid[sr][sc]
+            distance  = abs(sr - current_pos[0]) + abs(sc - current_pos[1])
             tentative_g = g_score[current] + distance
 
             if tentative_g < g_score[successor_node]:
                 came_from[successor_node] = current
-                g_score[successor_node] = tentative_g
-                f_score = tentative_g + h(successor_pos, end_pos)
-
-                if successor_node not in open_set_hash:
-                    count += 1
-                    open_set.put((f_score, count, successor_node, current_pos))
-                    open_set_hash.add(successor_node)
-                    successor_node.make_open()
+                g_score[successor_node]   = tentative_g
+                f = tentative_g + h(successor_pos, end_pos)
+                count += 1
+                open_set.put((f, count, successor_node, current_pos))
+                open_set_hash.add(successor_node)
+                successor_node.make_open()
 
         draw()
-
         if current != start:
             current.make_closed()
 
