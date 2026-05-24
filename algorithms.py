@@ -56,7 +56,11 @@ def a_star(draw, grid, start, end):
                 pygame.quit()
 
         current = open_set.get()[2]
-        open_set_hash.discard(current)   # discard is safe even if already removed
+
+        # Lazy deletion: skip stale entries (node was re-queued with better score)
+        if current not in open_set_hash:
+            continue
+        open_set_hash.discard(current)
 
         if current == end:
             path = reconstruct_path(came_from, end, draw)
@@ -408,17 +412,19 @@ def jump_point_search(draw, grid, start, end):
             if jp:
                 successors.append(jp)
 
-            # Always probe perpendicular directions
-            if dr != 0:              # moving vertically → probe horizontal
+            # Probe perpendicular only when a forced neighbor exists
+            if dr != 0:              # moving vertically → probe horizontal if forced
                 for pdc in (1, -1):
-                    jp = jump(r, c, 0, pdc)
-                    if jp:
-                        successors.append(jp)
-            else:                    # moving horizontally → probe vertical
+                    if not passable(r - dr, c + pdc) and passable(r, c + pdc):
+                        jp = jump(r, c, 0, pdc)
+                        if jp:
+                            successors.append(jp)
+            else:                    # moving horizontally → probe vertical if forced
                 for pdr in (1, -1):
-                    jp = jump(r, c, pdr, 0)
-                    if jp:
-                        successors.append(jp)
+                    if not passable(r + pdr, c - dc) and passable(r + pdr, c):
+                        jp = jump(r, c, pdr, 0)
+                        if jp:
+                            successors.append(jp)
 
         return successors
 
