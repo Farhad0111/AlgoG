@@ -367,30 +367,32 @@ def jump_point_search(draw, grid, start, end):
 
     def jump(r, c, dr, dc):
         """
-        Scan from (r+dr, c+dc) in direction (dr,dc).
-        Returns the position of a jump point, or None.
+        Scan iteratively from (r, c) in direction (dr,dc).
+        Returns the position of a jump point, a corner cell before a wall, or None.
         """
-        nr, nc = r + dr, c + dc
-        if not passable(nr, nc):
-            return None
-        if (nr, nc) == end_pos:
-            return (nr, nc)
-
-        if dr == 0:  # horizontal movement
-            # Forced neighbour: perpendicular cell blocked at previous col, open now
-            if (not passable(nr - 1, nc - dc) and passable(nr - 1, nc)) or \
-               (not passable(nr + 1, nc - dc) and passable(nr + 1, nc)):
-                return (nr, nc)
-        else:        # vertical movement
-            # Forced neighbour: perpendicular cell blocked at previous row, open now
-            if (not passable(nr - dr, nc - 1) and passable(nr, nc - 1)) or \
-               (not passable(nr - dr, nc + 1) and passable(nr, nc + 1)):
-                return (nr, nc)
-            # For vertical movement, also test horizontal jumps (recursive)
-            if jump(nr, nc, 0, 1) is not None or jump(nr, nc, 0, -1) is not None:
+        while True:
+            nr, nc = r + dr, c + dc
+            if not passable(nr, nc):
+                return (r, c)  # Hit a wall, stop before it to allow turning
+            if (nr, nc) == end_pos:
                 return (nr, nc)
 
-        return jump(nr, nc, dr, dc)   # continue in same direction
+            if dr == 0:  # horizontal movement
+                if (not passable(nr - 1, nc - dc) and passable(nr - 1, nc)) or \
+                   (not passable(nr + 1, nc - dc) and passable(nr + 1, nc)):
+                    return (nr, nc)
+            else:        # vertical movement
+                if (not passable(nr - dr, nc - 1) and passable(nr, nc - 1)) or \
+                   (not passable(nr - dr, nc + 1) and passable(nr, nc + 1)):
+                    return (nr, nc)
+                    
+            # Stop if we cross the target's row/column to allow turning into it
+            if dr != 0 and nr == end_pos[0]:
+                return (nr, nc)
+            if dc != 0 and nc == end_pos[1]:
+                return (nr, nc)
+
+            r, c = nr, nc  # Continue iterative scan
 
     def get_successors(node, parent_pos):
         r, c = node.get_pos()
@@ -398,33 +400,23 @@ def jump_point_search(draw, grid, start, end):
 
         if parent_pos is None:
             # Start node: explore all 4 directions
-            for dr, dc in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-                jp = jump(r, c, dr, dc)
-                if jp:
-                    successors.append(jp)
+            dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         else:
             pr, pc = parent_pos
             dr = 0 if r == pr else (1 if r > pr else -1)
             dc = 0 if c == pc else (1 if c > pc else -1)
 
-            # Continue in natural direction
-            jp = jump(r, c, dr, dc)
-            if jp:
-                successors.append(jp)
+            # Continue in natural direction and unconditionally probe perpendiculars
+            if dr != 0:
+                dirs = [(dr, 0), (0, 1), (0, -1)]
+            else:
+                dirs = [(0, dc), (1, 0), (-1, 0)]
 
-            # Probe perpendicular only when a forced neighbor exists
-            if dr != 0:              # moving vertically → probe horizontal if forced
-                for pdc in (1, -1):
-                    if not passable(r - dr, c + pdc) and passable(r, c + pdc):
-                        jp = jump(r, c, 0, pdc)
-                        if jp:
-                            successors.append(jp)
-            else:                    # moving horizontally → probe vertical if forced
-                for pdr in (1, -1):
-                    if not passable(r + pdr, c - dc) and passable(r + pdr, c):
-                        jp = jump(r, c, pdr, 0)
-                        if jp:
-                            successors.append(jp)
+        for ddr, ddc in dirs:
+            if passable(r + ddr, c + ddc):
+                jp = jump(r, c, ddr, ddc)
+                if jp and jp != (r, c):
+                    successors.append(jp)
 
         return successors
 
